@@ -1,6 +1,8 @@
 const express = require("express")
 const router = express.Router()
 const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken")
+const env = require("dotenv").config()
 
 function initializeRoutes(db) {
   // +++++++++
@@ -54,7 +56,16 @@ function initializeRoutes(db) {
         return res.status(401).send("Incorrect password")
       }
 
-      res.json({ id: user.id, username: user.username, email: user.email })
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+        expiresIn: "3d",
+      })
+
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        token,
+      })
     } catch (error) {
       console.error(error)
       res.status(500).send("Internal Server Error")
