@@ -1,5 +1,6 @@
 const express = require("express")
 const router = express.Router()
+const bcrypt = require("bcrypt")
 
 function initializeRoutes(db) {
   router.get("/", (req, res) => {
@@ -27,20 +28,27 @@ function initializeRoutes(db) {
     })
   })
 
-  router.post("/", (req, res) => {
+  router.post("/", async (req, res) => {
     const { username, email, password } = req.body
-    db.run(
-      "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-      [username, email, password],
-      function (err) {
-        if (err) {
-          console.error(err)
-          res.status(500).send("Internal Server Error")
-        } else {
-          res.json({ id: this.lastID, username, email })
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10)
+
+      db.run(
+        "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+        [username, email, hashedPassword],
+        function (err) {
+          if (err) {
+            console.error(err)
+            res.status(500).send("Internal Server Error")
+          } else {
+            res.json({ id: this.lastID, username, email })
+          }
         }
-      }
-    )
+      )
+    } catch (error) {
+      console.error(error)
+      res.status(500).send("Internal Server Error")
+    }
   })
 
   router.put("/:id", (req, res) => {
