@@ -1,21 +1,22 @@
 const express = require("express")
 const usersRoutes = require("./routes/users")
 const sqlite3 = require("sqlite3").verbose()
-const userSchema = require("./sql/users")
+const initializeDatabase = require("./database/schema")
 
 const app = express()
 const port = 3000
 
-// Create and connect to SQLite database
-const db = new sqlite3.Database("./database.db")
+// Connecting to SQLite database
+const db = new sqlite3.Database("./sqlite.db")
 
-// Middleware to parse JSON requests
+// Initialize the database schema
+initializeDatabase(db)
+
 app.use(express.json())
 
-// Use the users routes
-app.use("/users", usersRoutes)
+// Routes with the database connection passed as a parameter
+app.use("/users", usersRoutes(db))
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`)
 })
