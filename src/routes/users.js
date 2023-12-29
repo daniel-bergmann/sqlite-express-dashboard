@@ -31,6 +31,11 @@ function initializeRoutes(db) {
   router.post("/", async (req, res) => {
     const { username, email, password } = req.body
     try {
+      const existingUser = await getUserByEmail(email)
+      if (existingUser) {
+        return res.status(409).send("User already exists")
+      }
+
       const hashedPassword = await bcrypt.hash(password, 10)
 
       db.run(
@@ -79,6 +84,19 @@ function initializeRoutes(db) {
       }
     })
   })
+
+  // Get a user by email
+  async function getUserByEmail(email) {
+    return new Promise((resolve, reject) => {
+      db.get("SELECT * FROM users WHERE email = ?", [email], (err, row) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(row)
+        }
+      })
+    })
+  }
   return router
 }
 
